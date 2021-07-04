@@ -1,10 +1,10 @@
 package dev.stanuch;
 
 import org.jboss.resteasy.annotations.cache.NoCache;
-import org.keycloak.authorization.policy.evaluation.Realm;
-import org.keycloak.credential.CredentialModel;
 import org.keycloak.models.*;
 import org.keycloak.services.ErrorResponse;
+import org.keycloak.services.managers.AppAuthManager;
+import org.keycloak.services.managers.AuthenticationManager;
 import org.keycloak.services.messages.Messages;
 import org.keycloak.services.resource.RealmResourceProvider;
 
@@ -14,7 +14,7 @@ import javax.ws.rs.core.Response;
 
 public class KeycloakCustomApiProvider implements RealmResourceProvider {
 
-    private KeycloakSession session;
+    private final KeycloakSession session;
 
     public KeycloakCustomApiProvider(KeycloakSession session) {
         this.session = session;
@@ -33,7 +33,7 @@ public class KeycloakCustomApiProvider implements RealmResourceProvider {
     @GET
     @Path("hello")
     @NoCache
-    @Produces({ MediaType.APPLICATION_JSON })
+    @Produces({MediaType.APPLICATION_JSON})
     @Encoded
     public String Hello() {
         return "hello";
@@ -45,18 +45,22 @@ public class KeycloakCustomApiProvider implements RealmResourceProvider {
     @Produces({MediaType.APPLICATION_JSON})
     @Encoded
     public Response UpdatePassword(PasswordUpdate passwordUpdate) {
-        var userId = "34322aa0-9fc7-44af-bff4-1a33fcb373f7";
+        var authResult = new AppAuthManager.BearerTokenAuthenticator(session).authenticate();
+
+        if (authResult == null || authResult.getToken() == null) {
+            throw new NotAuthorizedException("Bearer");
+        }
+
+        String userId = authResult.getUser().getId();
+
         RealmModel realm = session.getContext().getRealm();
-        UserModel user = session.users().getUserById(
-                userId,
-                realm
-        );
+        UserModel user = session.users().getUserById(userId, realm);
 
         UserCredentialModel userCredentialModel = UserCredentialModel.password(passwordUpdate.getCurrentPassword());
         boolean isCurrentPasswordValid = session.userCredentialManager().isValid(realm, user, userCredentialModel);
 
         if (!isCurrentPasswordValid) {
-            return ErrorResponse.error(Messages.DELEGATION_FAILED, Response.Status.BAD_REQUEST);
+            return ErrorResponse.error(Messages.INVALID_PASSWORD_EXISTING, Response.Status.BAD_REQUEST);
         }
 
         if (passwordUpdate.getNewPassword() == null) {
