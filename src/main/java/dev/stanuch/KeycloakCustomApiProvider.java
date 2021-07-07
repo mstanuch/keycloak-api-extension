@@ -1,10 +1,10 @@
 package dev.stanuch;
 
+import dev.stanuch.models.PasswordUpdate;
 import org.jboss.resteasy.annotations.cache.NoCache;
 import org.keycloak.models.*;
 import org.keycloak.services.ErrorResponse;
 import org.keycloak.services.managers.AppAuthManager;
-import org.keycloak.services.managers.AuthenticationManager;
 import org.keycloak.services.messages.Messages;
 import org.keycloak.services.resource.RealmResourceProvider;
 
@@ -78,37 +78,5 @@ public class KeycloakCustomApiProvider implements RealmResourceProvider {
         }
 
         return Response.noContent().build();
-    }
-
-    public static class PasswordUpdate {
-
-        private String currentPassword;
-        private String newPassword;
-        private String confirmation;
-
-        public String getCurrentPassword() {
-            return currentPassword;
-        }
-
-        public void setCurrentPassword(String currentPassword) {
-            this.currentPassword = currentPassword;
-        }
-
-        public String getNewPassword() {
-            return newPassword;
-        }
-
-        public void setNewPassword(String newPassword) {
-            this.newPassword = newPassword;
-        }
-
-        public String getConfirmation() {
-            return confirmation;
-        }
-
-        public void setConfirmation(String confirmation) {
-            this.confirmation = confirmation;
-        }
-
     }
 }
